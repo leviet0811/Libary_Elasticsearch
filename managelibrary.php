@@ -1,6 +1,6 @@
 <?php
 use Elasticsearch\Client;
-require "vendor/autoload.php";
+require __DIR__ . "/vendor/autoload.php";
 
 $hosts = [['host' => '127.0.0.1', 'port' => '9200', 'scheme' => 'http']];
 $client = \Elasticsearch\ClientBuilder::create()->setHosts($hosts)->build();

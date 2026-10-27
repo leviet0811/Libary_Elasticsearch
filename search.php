@@ -1,6 +1,6 @@
 <?php
 use Elasticsearch\Client;
-require 'vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 
 $hosts = [['host' => '127.0.0.1', 'port' => '9200', 'scheme' => 'http']];
 $client = \Elasticsearch\ClientBuilder::create()->setHosts($hosts)->build();
@@ -38,8 +38,8 @@ if ($search != null) {
                 ]
             ],
             'highlight' => [
-                'pre_tags' => ["<span class='bg-warning font-weight-bold'>"], 
-                'post_tags' => ["</span>"],
+                'pre_tags' => ["<mark>"],
+                'post_tags' => ["</mark>"],
                 'fields' => [
                     'title' => new stdClass(),
                     'keywords' => new stdClass(),
@@ -57,7 +57,7 @@ if ($search != null) {
     } catch (\Elasticsearch\Common\Exceptions\Missing404Exception $e) {
         $error_msg = '<div class="alert alert-danger text-center mt-4 shadow-sm">Khu vực bạn chọn tìm kiếm chưa tồn tại hoặc không có dữ liệu!</div>';
     } catch (Exception $e) {
-        $error_msg = '<div class="alert alert-danger text-center mt-4 shadow-sm">Lỗi: ' . $e->getMessage() . '</div>';
+        $error_msg = '<div class="alert alert-danger text-center mt-4 shadow-sm">Lỗi: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . '</div>';
     }
 }
 ?>
@@ -93,11 +93,17 @@ elseif ($rs != null):
     <div class="row">
         <?php foreach ($rs as $r):?>
             <?php
-                $title = $r['highlight']['title'][0] ?? $r['_source']['title'];
-                $cover = !empty($r['_source']['cover_image']) ? $r['_source']['cover_image'] : 'https://via.placeholder.com/300x400?text=Chua+Co+Anh+Bia';
-                $content_snippet = $r['highlight']['content'][0] ?? substr($r['_source']['content'] ?? 'Chưa có tóm tắt...', 0, 100) . '...';
-                $id = $r['_id'];
-                $index_name_found = $r['_index']; // Nơi chứa cuốn sách được tìm thấy
+                // Escape toàn bộ dữ liệu người dùng để chống XSS, sau đó khôi phục đúng thẻ <mark> do highlight chèn vào
+                $restore_mark = fn($s) => str_replace(['<mark>', '</mark>'], ['<mark>', '</mark>'], $s);
+                $title = isset($r['highlight']['title'][0])
+                    ? $restore_mark(htmlspecialchars($r['highlight']['title'][0], ENT_QUOTES, 'UTF-8'))
+                    : htmlspecialchars($r['_source']['title'] ?? '', ENT_QUOTES, 'UTF-8');
+                $cover = !empty($r['_source']['cover_image']) ? htmlspecialchars($r['_source']['cover_image'], ENT_QUOTES, 'UTF-8') : 'https://placehold.co/300x400?text=Chua+Co+Anh+Bia';
+                $content_snippet = isset($r['highlight']['content'][0])
+                    ? $restore_mark(htmlspecialchars($r['highlight']['content'][0], ENT_QUOTES, 'UTF-8'))
+                    : htmlspecialchars(substr($r['_source']['content'] ?? 'Chưa có tóm tắt...', 0, 100), ENT_QUOTES, 'UTF-8') . '...';
+                $id = htmlspecialchars($r['_id'], ENT_QUOTES, 'UTF-8');
+                $index_name_found = htmlspecialchars($r['_index'], ENT_QUOTES, 'UTF-8'); // Nơi chứa cuốn sách được tìm thấy
             ?>
             <div class="col-md-3 mb-4">
                 <div class="card h-100 shadow-sm border-0">
@@ -118,7 +124,7 @@ elseif ($rs != null):
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <div class="modal-header bg-dark text-white">
-                            <h5 class="modal-title"><i class="fas fa-book"></i> <?=$r['_source']['title']?></h5>
+                            <h5 class="modal-title"><i class="fas fa-book"></i> <?=htmlspecialchars($r['_source']['title'] ?? '', ENT_QUOTES, 'UTF-8')?></h5>
                             <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
                         </div>
                         <div class="modal-body row">
@@ -129,9 +135,9 @@ elseif ($rs != null):
                                 <h6>Mã sách: <span class="badge badge-secondary"><?=$id?></span></h6>
                                 <h6>Thuộc tủ: <span class="badge badge-info"><?=$index_name_found?></span></h6>
                                 <h6 class="mt-3 text-danger"><i class="fas fa-tags"></i> Từ khóa:</h6>
-                                <p><?= implode(', ', $r['_source']['keywords'] ?? ['Không có']) ?></p>
+                                <p><?= implode(', ', array_map(fn($k) => htmlspecialchars((string)$k, ENT_QUOTES, 'UTF-8'), (array)($r['_source']['keywords'] ?? ['Không có']))) ?></p>
                                 <h6 class="mt-3 text-primary"><i class="fas fa-align-left"></i> Nội dung tóm tắt:</h6>
-                                <p class="text-justify" style="white-space: pre-wrap;"><?=$r['_source']['content'] ?? 'Chưa có nội dung cập nhật.'?></p>
+                                <p class="text-justify" style="white-space: pre-wrap;"><?=htmlspecialchars($r['_source']['content'] ?? 'Chưa có nội dung cập nhật.', ENT_QUOTES, 'UTF-8')?></p>
                             </div>
                         </div>
                     </div>

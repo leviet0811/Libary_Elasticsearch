@@ -41,7 +41,9 @@
                     <p class="lead">Hệ thống tra cứu sách tốc độ cao sử dụng lõi Elasticsearch.</p>
                 </div>
             <?php else:?>
-                <?php include $page.'.php'; ?>
+                <?php if (array_key_exists($page, $menuitems)): include __DIR__.'/'.$page.'.php'; else: ?>
+                    <div class="alert alert-danger text-center">Trang không tồn tại!</div>
+                <?php endif; ?>
             <?php endif;?>
         </div>
     </body>

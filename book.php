@@ -1,6 +1,6 @@
 <?php
 use Elasticsearch\Client;
-require 'vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 
 $hosts = [['host' => '127.0.0.1', 'port' => '9200', 'scheme' => 'http']];
 $client = \Elasticsearch\ClientBuilder::create()->setHosts($hosts)->build();
@@ -27,7 +27,7 @@ if (isset($_POST['title']) && isset($_POST['id']) && isset($_POST['target_index'
     ];
     try {
         $client->index($params);
-        echo '<div class="alert alert-success shadow-sm"><i class="fas fa-check-circle"></i> Đã cất cuốn sách <strong>' . htmlspecialchars($_POST['title']) . '</strong> vào tủ: <strong>'.$_POST['target_index'].'</strong></div>';
+        echo '<div class="alert alert-success shadow-sm"><i class="fas fa-check-circle"></i> Đã cất cuốn sách <strong>' . htmlspecialchars($_POST['title'], ENT_QUOTES, 'UTF-8') . '</strong> vào tủ: <strong>'.htmlspecialchars($_POST['target_index'], ENT_QUOTES, 'UTF-8').'</strong></div>';
     } catch(Exception $e) {
         echo '<div class="alert alert-danger shadow-sm">Lỗi: ' . $e->getMessage() . '</div>';
     }

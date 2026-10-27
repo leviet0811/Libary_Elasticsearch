@@ -10,3 +10,9 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# Môi trường / secrets
+.env
+
+# macOS
+.DS_Store
